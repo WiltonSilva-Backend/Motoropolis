@@ -1,0 +1,49 @@
+name: Build WebGL
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - Assets/**
+      - Packages/**
+      - ProjectSettings/**
+      - .github/workflows/build-webgl.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Motoropolis for the browser
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Unity cache
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: 2020.1.8f1
+          targetPlatform: WebGL
+          buildsPath: build
+
+      - name: Publish browser build
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: webgl-build
+          folder: build/WebGL
+          clean: true
+          single-commit: true
